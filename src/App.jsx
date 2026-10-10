@@ -4,7 +4,9 @@ import World from './World.jsx'
 import Player from './Player.jsx'
 import Minimap from './Minimap.jsx'
 import TouchControls from './TouchControls.jsx'
+import ChatPanel from './ChatPanel.jsx'
 import { EYE, SPAWN } from './layout.js'
+import { PEOPLE_INFO, TALKING } from './talk.js'
 
 export default function App() {
   const [locked, setLocked] = useState(false)
@@ -24,11 +26,46 @@ export default function App() {
     setTouchOn(on)
   }
   const playing = locked || touchOn
+  const [hover, setHover] = useState(null) // talk id under the crosshair
+  const [talking, setTalking] = useState(null) // talk id we're chatting with
+  const onHover = useCallback((id) => setHover(id), [])
+  const onTalk = useCallback((id) => {
+    lockRef.unlock?.() // free the mouse so you can type
+    TALKING.id = id
+    setTalking(id)
+  }, [])
+  const closeChat = useCallback(() => {
+    TALKING.id = null
+    setTalking(null)
+    if (!touchRef.current.active) {
+      try {
+        lockRef.current?.() // grab the mouse again (browsers may refuse after Esc; then the overlay shows)
+      } catch {
+        /* overlay handles it */
+      }
+    }
+  }, [])
   useEffect(() => {
-    const k = (e) => e.code === 'KeyM' && setShowMap((v) => !v)
+    const k = (e) => {
+      if (e.target instanceof HTMLElement && e.target.matches('input, textarea')) return
+      if (e.code === 'KeyM') setShowMap((v) => !v)
+    }
     window.addEventListener('keydown', k)
     return () => window.removeEventListener('keydown', k)
   }, [])
+  // dev helper: document.body.dataset.talk = "zaman" opens the chat without pointer lock
+  useEffect(() => {
+    if (!import.meta.env.DEV) return
+    const obs = new MutationObserver(() => {
+      const id = document.body.dataset.talk
+      if (id && PEOPLE_INFO[id]) {
+        delete document.body.dataset.talk
+        onTalk(id)
+      }
+    })
+    obs.observe(document.body, { attributes: true, attributeFilter: ['data-talk'] })
+    return () => obs.disconnect()
+  }, [onTalk])
 
   return (
     <>
@@ -37,7 +74,7 @@ export default function App() {
         dpr={[1, 1.75]}
       >
         <World />
-        <Player lockRef={lockRef} mapRef={mapRef} touchRef={touchRef} onLock={onLock} onWhere={onWhere} />
+        <Player lockRef={lockRef} mapRef={mapRef} touchRef={touchRef} onLock={onLock} onWhere={onWhere} onHover={onHover} onTalk={onTalk} />
       </Canvas>
 
       <div className="where">
@@ -50,10 +87,17 @@ export default function App() {
       <button className="maptoggle" onClick={() => setShowMap((s) => !s)}>
         {showMap ? 'hide map' : 'map'}
       </button>
-      {playing && <div className="crosshair" />}
-      {touchOn && <TouchControls touchRef={touchRef} onPause={() => setTouch(false)} />}
+      {playing && !talking && <div className={hover ? 'crosshair talk' : 'crosshair'} />}
+      {playing && !talking && hover && (
+        // on touch screens the pill is a button; with a mouse you just click
+        <button className="talkpill" onClick={() => touchOn && onTalk(hover)} tabIndex={touchOn ? 0 : -1}>
+          {touchOn ? 'Tap' : 'Click'} to talk to {PEOPLE_INFO[hover]?.name}
+        </button>
+      )}
+      {touchOn && !talking && <TouchControls touchRef={touchRef} onPause={() => setTouch(false)} />}
+      {talking && <ChatPanel key={talking} id={talking} onClose={closeChat} />}
 
-      {!playing && (
+      {!playing && !talking && (
         <div className="overlay" onClick={() => (isTouch ? setTouch(true) : lockRef.current?.())}>
           <div className="card">
             <div className="kicker">Yale SOM · Evans Hall</div>

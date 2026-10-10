@@ -47,3 +47,28 @@ Open http://localhost:5173 and click **Click to walk in**.
 The layout is estimated from the wayfinding plan posted on the floor, so room sizes are approximate. The Stair G painting comes from a photo; the other stairwell paintings are made up.
 
 Made for MGT 409: AI Foundations for Managers, Lecture 13.
+
+## AI avatar professors
+
+Some classrooms have **AI avatars of real Yale SOM professors** you can walk up to and chat with: aim the crosshair at one ("Click to talk to …") and click. They turn to face you while you talk. Each avatar is clearly an AI, not the real person.
+
+| Room | Avatar | Course |
+| --- | --- | --- |
+| 2200 | Prof. Tauhid Zaman | MGT 409 · AI Foundations for Managers |
+| 2210 | Prof. Peter Schott | MGT 407 · Statistics (EMBA) |
+
+Each avatar is a PydanticAI agent in `backend/` (FastAPI). Its prompt is built from the course database (`data/yale_som.db`) plus a speaking style, and every avatar shares tools to look up any course, professor, or catalog totals.
+
+**Run the backend** (needs `PORTKEY_API_KEY` in a `.env` in `backend/`, this folder, or one or two folders up):
+
+```bash
+python -m venv backend/.venv
+backend/.venv/Scripts/python -m pip install -r backend/requirements.txt
+backend/.venv/Scripts/python -m uvicorn main:app --app-dir backend --port 8000
+```
+
+Then `npm run dev`; Vite proxies `/api` to the backend. The model defaults to `gpt-6-luna` (override with `OPENAI_MODEL`).
+
+The GitHub Pages site has no backend, so the avatars are there but the chat says it can't reach the backend.
+
+**Add an avatar:** a persona in `backend/professors.py`, an outfit preset in `src/Professor.jsx`, the room in `src/Faculty.jsx`, chat info in `src/talk.js`, and a slide deck in `src/layout.js` + `src/slides.js`.

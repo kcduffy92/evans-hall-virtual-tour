@@ -2,15 +2,17 @@ import { useMemo } from 'react'
 import * as THREE from 'three'
 import Professor, { PROFESSORS } from './Professor.jsx'
 import { DRUMS, LECTERNS } from './layout.js'
+import { PEOPLE_INFO } from './talk.js'
 
-// which Hogwarts professor teaches in which classroom (matches the slide decks)
+// who teaches in which classroom (matches the slide decks); AI avatars of real
+// Yale SOM professors are replacing the Hogwarts cast one room at a time
 export const ROOM_PROFESSOR = {
   2400: 'dumbledore', // MGT 409 AI Foundations for Managers
   2410: 'mcgonagall', // MGT 404 Basics of Economics
   2420: 'trelawney', // MGT 403 Probability Modeling & Statistics
   2430: 'slughorn', // MGT 887 Negotiations
-  2200: 'snape', // MGT 402 Basics of Accounting
-  2210: 'lockhart', // MGT 538 Mastering Influence & Persuasion
+  2200: 'zaman', // MGT 409 AI Foundations for Managers (AI avatar; the course database puts MGT 409 in EVANS 2200)
+  2210: 'schott', // MGT 407 Statistics (EMBA) (AI avatar)
   2220: 'moody', // MGT 800 Crisis Management in Tech
   2230: 'flitwick', // MGT 541 Corporate Finance
 }
@@ -53,7 +55,7 @@ export default function Faculty() {
     <>
       {items.map((it, i) => (
         <group key={i}>
-          <Professor who={it.who} position={it.pos} rotation={it.rot} phase={i * 1.7} />
+          <Professor who={it.who} position={it.pos} rotation={it.rot} phase={i * 1.7} talkId={PEOPLE_INFO[it.who] ? it.who : undefined} />
           <mesh position={it.plaque.p} rotation={[0, it.plaque.rot, 0]} material={it.plaque.mat}>
             <planeGeometry args={[0.6, 0.15]} />
           </mesh>

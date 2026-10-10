@@ -11,6 +11,8 @@ export const COURSES = {
   mgt538: { code: 'MGT 538', name: 'Mastering Influence & Persuasion', prof: 'Gilderoy Lockhart' },
   mgt800: { code: 'MGT 800', name: 'Crisis Management in Tech', prof: 'Alastor Moody' },
   mgt541: { code: 'MGT 541', name: 'Corporate Finance', prof: 'Filius Flitwick' },
+  mgt409z: { code: 'MGT 409', name: 'AI Foundations for Managers', prof: 'Tauhid Zaman' },
+  mgt407s: { code: 'MGT 407', name: 'Statistics (EMBA)', prof: 'Peter Schott' },
 }
 export const COURSE_KEYS = Object.keys(COURSES)
 export const SLIDE_KINDS = ['title', 'chart', 'content']
@@ -61,6 +63,16 @@ const DECKS = {
     title: ['Valuation by DCF', 'A dollar today beats a dollar tomorrow'],
     content: ['NPV and the cost of capital', ['NPV = Σ CFₜ / (1 + r)ᵗ − I₀', 'Take projects with NPV > 0', 'r = WACC, set by risk, not by hope', 'Terminal value often dominates — check it']],
     chart: 'dcf',
+  },
+  mgt409z: {
+    title: ['AI Agents with PydanticAI', 'Model + instructions + tools = an agent'],
+    content: ['Building an agent in PydanticAI', ['agent = Agent(model, instructions=...)', '@agent.tool gives it hands', 'result = agent.run_sync(prompt) → result.output', 'Typed outputs with Pydantic models']],
+    chart: 'agentloop',
+  },
+  mgt407s: {
+    title: ['Regression, Surf’s Up', 'Finding the line through the noise'],
+    content: ['Reading a regression', ['ŷ = β₀ + β₁x: slope = change in y per unit x', 'Standard error → is β₁ really ≠ 0?', 'CLT: x̄ is ~normal, SE = σ/√n', 'Correlation ≠ causation (ask: what changed?)']],
+    chart: 'regression',
   },
 }
 
@@ -211,6 +223,83 @@ function drawChart(g, which) {
       g.fillText(`t=${i}`, x + 25, oy + 40)
     }
     g.fillText('cash flow vs. present value (r = 18%)', ox + 20, 200)
+  } else if (which === 'regression') {
+    // scatter + fitted line, with one residual marked
+    axes()
+    const line = (x) => oy - 60 - (x - ox) * 0.36
+    let seed = 7
+    const rnd = () => ((seed = (seed * 9301 + 49297) % 233280) / 233280 - 0.5) * 2
+    g.fillStyle = BLUE
+    const pts = Array.from({ length: 26 }, (_, i) => {
+      const x = ox + 50 + i * 36
+      return [x, line(x) + rnd() * 70]
+    })
+    pts.forEach(([x, y]) => {
+      g.beginPath()
+      g.arc(x, y, 9, 0, Math.PI * 2)
+      g.fill()
+    })
+    g.strokeStyle = PINK
+    g.lineWidth = 6
+    g.beginPath()
+    g.moveTo(ox + 20, line(ox + 20))
+    g.lineTo(1130, line(1130))
+    g.stroke()
+    const [rx, ry] = pts[17]
+    g.setLineDash([8, 8])
+    g.strokeStyle = INK
+    g.lineWidth = 3
+    g.beginPath()
+    g.moveTo(rx, ry)
+    g.lineTo(rx, line(rx))
+    g.stroke()
+    g.setLineDash([])
+    g.fillStyle = INK
+    g.fillText('residual', rx + 16, (ry + line(rx)) / 2 + 10)
+    g.fillText('ŷ = β₀ + β₁x', 860, 230)
+    g.fillText('x', 1120, 640)
+    g.fillText('y', 140, 190)
+  } else if (which === 'agentloop') {
+    // User → Agent ⇄ Tool, then Agent → typed answer
+    const box = (x, y, w, label, fill, ink = '#ffffff') => {
+      g.fillStyle = fill
+      g.fillRect(x, y, w, 110)
+      g.fillStyle = ink
+      g.font = 'bold 40px Georgia, serif'
+      g.fillText(label, x + (w - g.measureText(label).width) / 2, y + 70)
+    }
+    const arrow = (x0, y0, x1, y1, label) => {
+      g.strokeStyle = INK
+      g.fillStyle = INK
+      g.lineWidth = 5
+      g.beginPath()
+      g.moveTo(x0, y0)
+      g.lineTo(x1, y1)
+      g.stroke()
+      const a = Math.atan2(y1 - y0, x1 - x0)
+      g.beginPath()
+      g.moveTo(x1, y1)
+      g.lineTo(x1 - 22 * Math.cos(a - 0.4), y1 - 22 * Math.sin(a - 0.4))
+      g.lineTo(x1 - 22 * Math.cos(a + 0.4), y1 - 22 * Math.sin(a + 0.4))
+      g.fill()
+      if (label) {
+        g.font = '28px Georgia, serif'
+        g.fillText(label, (x0 + x1) / 2 - g.measureText(label).width / 2, (y0 + y1) / 2 - 14)
+      }
+    }
+    box(90, 300, 220, 'User', '#8aa4c8', INK)
+    box(500, 300, 260, 'Agent', BLUE)
+    box(950, 170, 240, 'Tool', PINK)
+    box(890, 450, 330, 'answer', '#e9edf3', INK)
+    arrow(310, 355, 495, 355, 'prompt')
+    arrow(760, 320, 945, 235, 'call')
+    arrow(950, 260, 765, 345, '')
+    g.font = '28px Georgia, serif'
+    g.fillStyle = INK
+    g.fillText('result', 820, 330)
+    arrow(760, 395, 885, 480, '')
+    g.font = 'italic 30px Georgia, serif'
+    g.fillText('(typed output)', 965, 610)
   } else {
     axes()
     g.fillStyle = BLUE

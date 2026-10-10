@@ -249,3 +249,219 @@ body,
     font-size: 38px;
   }
 }
+
+/* ---------- talk to AI avatars */
+.crosshair.talk {
+  width: 26px;
+  height: 26px;
+  margin: -13px 0 0 -13px;
+  background: transparent;
+  border: 3px solid var(--pink);
+  box-shadow: 0 0 14px var(--pink);
+}
+
+.talkpill {
+  position: fixed;
+  left: 50%;
+  top: calc(50% + 28px);
+  transform: translateX(-50%);
+  padding: 7px 16px;
+  background: rgba(11, 11, 13, 0.85);
+  border: 1px solid var(--pink);
+  border-radius: 999px;
+  color: var(--pink-soft);
+  font: 600 14px system-ui, sans-serif;
+  white-space: nowrap;
+  z-index: 6;
+}
+
+.chat {
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: min(420px, 100vw);
+  display: flex;
+  flex-direction: column;
+  background: rgba(11, 11, 13, 0.96);
+  border-left: 2px solid var(--pink);
+  box-shadow: -8px 0 40px rgba(255, 79, 163, 0.25);
+  color: #f4f4f6;
+  z-index: 20;
+}
+
+.chat-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 18px 18px 14px;
+  border-bottom: 1px solid rgba(255, 79, 163, 0.35);
+}
+
+.chat-name {
+  font: bold 20px Georgia, serif;
+}
+
+.chat-sub {
+  margin-top: 4px;
+  color: var(--pink);
+  font-size: 12px;
+  letter-spacing: 0.04em;
+}
+
+.chat-x {
+  background: none;
+  border: 1px solid var(--pink);
+  border-radius: 50%;
+  width: 32px;
+  height: 32px;
+  color: var(--pink);
+  font-size: 20px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.chat-x:hover,
+.chat-x:focus-visible {
+  background: var(--pink);
+  color: var(--black);
+  outline: none;
+}
+
+.chat-list {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.msg {
+  max-width: 88%;
+  padding: 10px 13px;
+  border-radius: 14px;
+  line-height: 1.45;
+  font-size: 14.5px;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.msg.you {
+  align-self: flex-end;
+  background: var(--pink);
+  color: var(--black);
+  border-bottom-right-radius: 4px;
+}
+
+.msg.them {
+  align-self: flex-start;
+  background: #1d1d22;
+  border: 1px solid #2c2c33;
+  border-bottom-left-radius: 4px;
+}
+
+.msg.system {
+  align-self: center;
+  max-width: 100%;
+  background: none;
+  color: #a9a9b3;
+  font-size: 13px;
+  text-align: center;
+}
+
+.msg.typing {
+  font-size: 22px;
+  letter-spacing: 3px;
+  animation: blink 1s infinite;
+}
+
+@keyframes blink {
+  50% {
+    opacity: 0.35;
+  }
+}
+
+.msg code {
+  background: rgba(255, 79, 163, 0.15);
+  color: var(--pink-soft);
+  padding: 1px 5px;
+  border-radius: 4px;
+  font-size: 13px;
+}
+
+.msg pre {
+  margin: 8px 0;
+  padding: 10px;
+  background: #0b0b0d;
+  border: 1px solid #2c2c33;
+  border-radius: 8px;
+  overflow-x: auto;
+  font-size: 12.5px;
+  white-space: pre;
+}
+
+.msg .tools {
+  margin-top: 6px;
+  color: var(--pink);
+  font-size: 11px;
+  letter-spacing: 0.03em;
+}
+
+.chat-form {
+  display: flex;
+  gap: 8px;
+  padding: 12px;
+  border-top: 1px solid rgba(255, 79, 163, 0.35);
+}
+
+.chat-form textarea {
+  flex: 1;
+  resize: none;
+  padding: 10px 12px;
+  background: #16161a;
+  border: 1px solid #2c2c33;
+  border-radius: 10px;
+  color: #fff;
+  font: 14px system-ui, sans-serif;
+}
+
+.chat-form textarea:focus {
+  outline: none;
+  border-color: var(--pink);
+}
+
+.chat-form button {
+  padding: 0 18px;
+  border: 0;
+  border-radius: 10px;
+  background: var(--pink);
+  color: var(--black);
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.chat-form button:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+.msg table {
+  border-collapse: collapse;
+  margin: 6px 0;
+  font-size: 13px;
+  white-space: normal;
+}
+
+.msg th,
+.msg td {
+  padding: 3px 10px;
+  border: 1px solid #34343c;
+  text-align: right;
+}
+
+.msg th {
+  color: var(--pink);
+  font-weight: 600;
+}

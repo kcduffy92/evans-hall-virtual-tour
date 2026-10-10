@@ -3,15 +3,27 @@ import { useFrame, useThree } from '@react-three/fiber'
 import * as THREE from 'three'
 import { PointerLockControls } from 'three/examples/jsm/controls/PointerLockControls.js'
 import { EYE, MAX_STEP, SPAWN, collide, floorAt, locate } from './layout.js'
+import { TALKABLES } from './talk.js'
 
 const CROUCH_EYE = 1.05
 const JUMP_SPEED = 4.2
 const GRAVITY = 12
 const LOOK_SPEED = 0.005 // radians per touch pixel
+const TALK_RANGE = 8 // meters: how close you need to be to click someone
+const TALK_CHECK_EVERY = 6 // frames between crosshair raycasts
+const CENTER = new THREE.Vector2(0, 0)
+const isTyping = (e) => e.target instanceof HTMLElement && (e.target.matches('input, textarea') || e.target.isContentEditable)
+
+// walk up from the hit mesh to the root that carries a talk id
+function talkIdOf(obj) {
+  for (let o = obj; o; o = o.parent) if (o.userData.talkId) return o.userData.talkId
+  return null
+}
 
 // PC controls work like a shooter: WASD move, mouse look, Shift sprint, Space jump, C crouch.
 // Touch controls come in through touchRef: { active, move: [x, y], look: [dx, dy], jump }.
-export default function Player({ lockRef, mapRef, touchRef, onLock, onWhere }) {
+// Aim the crosshair at someone you can talk to and click (onHover reports who's targeted, onTalk opens the chat).
+export default function Player({ lockRef, mapRef, touchRef, onLock, onWhere, onHover, onTalk }) {
   const { camera, gl } = useThree()
   const controls = useMemo(() => new PointerLockControls(camera, gl.domElement), [camera, gl])
   const keys = useRef({})
@@ -23,11 +35,19 @@ export default function Player({ lockRef, mapRef, touchRef, onLock, onWhere }) {
   const vy = useRef(0)
   const fwd = useMemo(() => new THREE.Vector3(), [])
   const euler = useMemo(() => new THREE.Euler(0, 0, 0, 'YXZ'), [])
+  const ray = useMemo(() => {
+    const r = new THREE.Raycaster()
+    r.far = TALK_RANGE
+    return r
+  }, [])
+  const hover = useRef(null)
+  const frame = useRef(0)
 
   useEffect(() => {
     camera.position.set(SPAWN.x, EYE, SPAWN.z)
     camera.rotation.set(0, 0, 0)
     lockRef.current = () => controls.lock()
+    lockRef.unlock = () => controls.unlock()
     const on = () => onLock(true)
     const off = () => {
       keys.current = {} // keys held during Esc never get a keyup
@@ -36,14 +56,19 @@ export default function Player({ lockRef, mapRef, touchRef, onLock, onWhere }) {
     controls.addEventListener('lock', on)
     controls.addEventListener('unlock', off)
     const down = (e) => {
+      if (isTyping(e)) return // chat box keys don't walk the player
       keys.current[e.code] = true
       if (e.code === 'Space') e.preventDefault()
     }
     const up = (e) => (keys.current[e.code] = false)
     const blur = () => (keys.current = {})
+    const click = (e) => {
+      if (e.button === 0 && controls.isLocked && hover.current) onTalk?.(hover.current)
+    }
     window.addEventListener('keydown', down)
     window.addEventListener('keyup', up)
     window.addEventListener('blur', blur)
+    document.addEventListener('mousedown', click)
     return () => {
       controls.removeEventListener('lock', on)
       controls.removeEventListener('unlock', off)
@@ -51,10 +76,24 @@ export default function Player({ lockRef, mapRef, touchRef, onLock, onWhere }) {
       window.removeEventListener('keydown', down)
       window.removeEventListener('keyup', up)
       window.removeEventListener('blur', blur)
+      document.removeEventListener('mousedown', click)
     }
-  }, [camera, controls, lockRef, onLock])
+  }, [camera, controls, lockRef, onLock, onTalk])
 
   useFrame((_, rawDt) => {
+    // who's under the crosshair? (checked every few frames)
+    if (++frame.current % TALK_CHECK_EVERY === 0) {
+      let id = null
+      if (TALKABLES.size && (controls.isLocked || touchRef.current.active)) {
+        ray.setFromCamera(CENTER, camera)
+        const hit = ray.intersectObjects([...TALKABLES], true)[0]
+        id = hit ? talkIdOf(hit.object) : null
+      }
+      if (id !== hover.current) {
+        hover.current = id
+        onHover?.(id)
+      }
+    }
     const dt = Math.min(rawDt, 0.05)
     // dev only: teleport for screenshots by setting <body data-go="[x, z, yawDeg]">
     if (import.meta.env.DEV && document.body.dataset.go) {
